@@ -4,7 +4,7 @@
 // Geliştirme ortamında doğrudan API'yi, production'da proxy'yi kullan
 const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const DEV_API_KEY = 'AIzaSyAPL-IbJs3PRkd38VJsbzsspTvdamrtp_4';
-const DEV_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${DEV_API_KEY}`;
+const DEV_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-preview:generateContent?key=${DEV_API_KEY}`;
 const PROXY_URL = '/api/gemini';
 
 /**

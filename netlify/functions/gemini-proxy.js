@@ -18,7 +18,7 @@ export default async (req) => {
         });
     }
 
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-preview:generateContent?key=${API_KEY}`;
 
     try {
         const body = await req.json();
