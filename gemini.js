@@ -1,10 +1,7 @@
 // Sherlock Yes/No - Gemini API Service (Netlify Proxy)
-// API anahtarı artık sunucu tarafında güvenli bir şekilde saklanıyor.
+// API anahtarı sunucu tarafında güvenli bir şekilde saklanıyor.
+// Local test için: npx netlify dev
 
-// Geliştirme ortamında doğrudan API'yi, production'da proxy'yi kullan
-const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const DEV_API_KEY = 'AIzaSyAPL-IbJs3PRkd38VJsbzsspTvdamrtp_4';
-const DEV_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${DEV_API_KEY}`;
 const PROXY_URL = '/api/gemini';
 
 /**
@@ -93,33 +90,19 @@ Oyuncunun tahminini gerçek çözümle karşılaştır. İlk satırda şu değer
  * Make a request to the Gemini API (via proxy in production, direct in dev)
  */
 async function geminiRequest(requestBody) {
-    if (isLocalDev) {
-        // Development: direct API call
-        const response = await fetch(DEV_API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
-        });
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error('Gemini API error:', response.status, errorData);
-            throw new Error(`API error: ${response.status}`);
-        }
-        return await response.json();
-    } else {
-        // Production: use Netlify proxy
-        const response = await fetch(PROXY_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
-        });
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error('Proxy API error:', response.status, errorData);
-            throw new Error(`API error: ${response.status}`);
-        }
-        return await response.json();
+    const response = await fetch(PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API error:', response.status, errorData);
+        throw new Error(`API error: ${response.status}`);
     }
+
+    return await response.json();
 }
 
 /**
