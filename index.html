@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sherlock Yes/No - Yapay zeka destekli lateral thinking bulmaca oyunu. Gizemli senaryoları Evet/Hayır soruları sorarak çöz!">
+    <title>Sherlock Yes/No - Dedektif Bulmaca Oyunu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Ambient particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- ===== SPLASH SCREEN ===== -->
+    <section id="splash-screen" class="screen active">
+        <div class="splash-content">
+            <div class="logo-container">
+                <div class="magnifying-glass">
+                    <div class="glass-circle"></div>
+                    <div class="glass-handle"></div>
+                </div>
+                <h1 class="game-title">
+                    <span class="title-sherlock">Sherlock</span>
+                    <span class="title-yesno">Yes / No</span>
+                </h1>
+                <p class="game-subtitle">Yapay Zeka Destekli Dedektif Bulmaca</p>
+            </div>
+            <div class="splash-buttons">
+                <button id="btn-new-game" class="btn btn-primary">
+                    <span class="btn-icon">🔍</span>
+                    <span>Yeni Oyun</span>
+                </button>
+                <button id="btn-how-to-play" class="btn btn-secondary">
+                    <span class="btn-icon">📖</span>
+                    <span>Nasıl Oynanır?</span>
+                </button>
+            </div>
+            <div class="splash-footer">
+                <p>Gizemli senaryoları Evet/Hayır soruları sorarak çöz</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== HOW TO PLAY MODAL ===== -->
+    <div id="how-to-play-modal" class="modal">
+        <div class="modal-content">
+            <button id="modal-close" class="modal-close">&times;</button>
+            <h2>Nasıl Oynanır?</h2>
+            <div class="rules-list">
+                <div class="rule-item">
+                    <div class="rule-number">1</div>
+                    <div class="rule-text">
+                        <h3>Senaryoyu Oku</h3>
+                        <p>Yapay zeka sana gizemli bir senaryo sunar. Senaryoda bir sır gizlidir.</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <div class="rule-number">2</div>
+                    <div class="rule-text">
+                        <h3>Soru Sor</h3>
+                        <p>Sadece <strong>Evet</strong> veya <strong>Hayır</strong> ile cevaplanabilecek sorular sor.</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <div class="rule-number">3</div>
+                    <div class="rule-text">
+                        <h3>İpuçlarını Değerlendir</h3>
+                        <p>Cevapları birleştirerek çözüme ulaşmaya çalış. Takılırsan ipucu isteyebilirsin.</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <div class="rule-number">4</div>
+                    <div class="rule-text">
+                        <h3>Çözümü Bul</h3>
+                        <p>Hazır olduğunu hissettiğinde çözümünü sun ve doğru mu kontrol et!</p>
+                    </div>
+                </div>
+            </div>
+            <button id="modal-got-it" class="btn btn-primary">Anladım!</button>
+        </div>
+    </div>
+
+    <!-- ===== STORY SELECT SCREEN ===== -->
+    <section id="story-select-screen" class="screen">
+        <div class="screen-header">
+            <button id="btn-back-splash" class="btn-back">← Geri</button>
+            <h2>Bir Bulmaca Seç</h2>
+        </div>
+        <div class="difficulty-filters">
+            <button class="filter-btn active" data-difficulty="all">Tümü</button>
+            <button class="filter-btn" data-difficulty="1">⭐ Kolay</button>
+            <button class="filter-btn" data-difficulty="2">⭐⭐ Orta</button>
+            <button class="filter-btn" data-difficulty="3">⭐⭐⭐ Zor</button>
+        </div>
+        <div id="story-grid" class="story-grid">
+            <!-- Stories will be injected here -->
+        </div>
+    </section>
+
+    <!-- ===== GAME SCREEN ===== -->
+    <section id="game-screen" class="screen">
+        <div class="game-header">
+            <button id="btn-back-select" class="btn-back">← Bulmacalar</button>
+            <div class="game-stats">
+                <div class="stat" id="stat-questions">
+                    <span class="stat-icon">❓</span>
+                    <span class="stat-value" id="question-count">0</span>
+                    <span class="stat-label">Soru</span>
+                </div>
+                <div class="stat" id="stat-hints">
+                    <span class="stat-icon">💡</span>
+                    <span class="stat-value" id="hint-count">0</span>
+                    <span class="stat-label">İpucu</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-body">
+            <!-- Scenario Card -->
+            <div class="scenario-card" id="scenario-card">
+                <div class="scenario-badge">SENARYO</div>
+                <h3 id="scenario-title" class="scenario-title"></h3>
+                <p id="scenario-text" class="scenario-text"></p>
+                <button id="btn-toggle-scenario" class="btn-toggle-scenario">Senaryoyu Gizle ▲</button>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="chat-area" id="chat-area">
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Messages will be injected here -->
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <div class="input-row">
+                    <input type="text" id="question-input" class="question-input" placeholder="Evet/Hayır sorusu sor..." autocomplete="off">
+                    <button id="btn-send" class="btn btn-send" title="Soruyu Gönder">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+                <div class="action-buttons">
+                    <button id="btn-hint" class="btn btn-hint">
+                        <span>💡</span> İpucu İste
+                    </button>
+                    <button id="btn-solve" class="btn btn-solve">
+                        <span>🎯</span> Çözümü Tahmin Et
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SOLVE MODAL ===== -->
+    <div id="solve-modal" class="modal">
+        <div class="modal-content solve-modal-content">
+            <button id="solve-modal-close" class="modal-close">&times;</button>
+            <h2>🎯 Çözümünü Yaz</h2>
+            <p class="solve-hint-text">Hikayenin arkasındaki gerçeği açıkla:</p>
+            <textarea id="solve-input" class="solve-textarea" placeholder="Bence olan şuydu..." rows="4"></textarea>
+            <div class="solve-buttons">
+                <button id="btn-check-solution" class="btn btn-primary">Kontrol Et</button>
+                <button id="btn-cancel-solve" class="btn btn-secondary">Vazgeç</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== RESULT SCREEN ===== -->
+    <section id="result-screen" class="screen">
+        <div class="result-content">
+            <div id="result-icon" class="result-icon"></div>
+            <h2 id="result-title" class="result-title"></h2>
+            <div class="result-details">
+                <div class="result-stats">
+                    <div class="result-stat">
+                        <span class="result-stat-label">Toplam Soru</span>
+                        <span class="result-stat-value" id="result-questions">0</span>
+                    </div>
+                    <div class="result-stat">
+                        <span class="result-stat-label">Kullanılan İpucu</span>
+                        <span class="result-stat-value" id="result-hints">0</span>
+                    </div>
+                    <div class="result-stat">
+                        <span class="result-stat-label">Zorluk</span>
+                        <span class="result-stat-value" id="result-difficulty"></span>
+                    </div>
+                </div>
+                <div class="result-solution-box">
+                    <h3>Gerçek Çözüm</h3>
+                    <p id="result-solution"></p>
+                </div>
+            </div>
+            <div class="result-buttons">
+                <button id="btn-new-puzzle" class="btn btn-primary">
+                    <span>🔍</span> Yeni Bulmaca
+                </button>
+                <button id="btn-main-menu" class="btn btn-secondary">
+                    <span>🏠</span> Ana Menü
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
