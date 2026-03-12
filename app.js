@@ -68,29 +68,14 @@ const DOM = {
     resultDifficulty: $('#result-difficulty'),
     resultSolution: $('#result-solution'),
     btnNewPuzzle: $('#btn-new-puzzle'),
-    btnMainMenu: $('#btn-main-menu'),
-
-    particles: $('#particles')
+    btnMainMenu: $('#btn-main-menu')
 };
 
 // ============================================
 // INITIALIZATION
 // ============================================
 function init() {
-    createParticles();
     bindEvents();
-}
-
-function createParticles() {
-    for (let i = 0; i < 30; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.left = Math.random() * 100 + '%';
-        particle.style.animationDelay = Math.random() * 8 + 's';
-        particle.style.animationDuration = (6 + Math.random() * 6) + 's';
-        particle.style.width = particle.style.height = (1 + Math.random() * 2) + 'px';
-        DOM.particles.appendChild(particle);
-    }
 }
 
 function bindEvents() {
@@ -128,6 +113,12 @@ function bindEvents() {
     DOM.solveModalClose.addEventListener('click', () => toggleModal(DOM.solveModal, false));
     DOM.btnCancelSolve.addEventListener('click', () => toggleModal(DOM.solveModal, false));
     DOM.btnCheckSolution.addEventListener('click', handleCheckSolution);
+    DOM.solveInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleCheckSolution();
+        }
+    });
     DOM.solveModal.addEventListener('click', (e) => {
         if (e.target === DOM.solveModal) toggleModal(DOM.solveModal, false);
     });
@@ -357,7 +348,7 @@ async function handleHintRequest() {
 
         addAIChatBubble({
             type: 'hint',
-            text: `💡 İpucu ${state.hintsUsed}: ${hintText}`
+            text: `💡 ${hintText}`
         });
 
         // Add to conversation history
@@ -368,7 +359,7 @@ async function handleHintRequest() {
         removeTypingIndicator();
         addAIChatBubble({
             type: 'hint',
-            text: `💡 İpucu ${state.hintsUsed}: ${hint}`
+            text: `💡 ${hint}`
         });
     }
 

@@ -1,18 +1,32 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Sherlock Yes/No - Yapay zeka destekli lateral thinking bulmaca oyunu. Gizemli senaryoları Evet/Hayır soruları sorarak çöz!">
-    <title>Sherlock Yes/No - Dedektif Bulmaca Oyunu</title>
+    <meta name="description"
+        content="Sherlock Yes/No - Yapay zeka destekli yanal düşünmeli bulmaca oyunu. Gizemli senaryoları Evet/Hayır soruları sorarak çöz, gerçek bir dedektif ol!">
+    <title>Sherlock Yes/No</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕵️</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    <!-- Ambient particles -->
-    <div class="particles" id="particles"></div>
+    <!-- Ambient Decor -->
+    <div class="decor-container">
+        <div class="decor-item decor-1">🕵️</div>
+        <div class="decor-item decor-2">🎩</div>
+        <div class="decor-item decor-3">👣</div>
+        <div class="decor-item decor-4">📓</div>
+        <div class="decor-item decor-5">🗝️</div>
+        <div class="decor-item decor-6">🔍</div>
+    </div>
 
     <!-- ===== SPLASH SCREEN ===== -->
     <section id="splash-screen" class="screen active">
@@ -26,7 +40,7 @@
                     <span class="title-sherlock">Sherlock</span>
                     <span class="title-yesno">Yes / No</span>
                 </h1>
-                <p class="game-subtitle">Yapay Zeka Destekli Dedektif Bulmaca</p>
+                <p class="game-subtitle">Gerçek bir dedektif ol!</p>
             </div>
             <div class="splash-buttons">
                 <button id="btn-new-game" class="btn btn-primary">
@@ -61,7 +75,8 @@
                     <div class="rule-number">2</div>
                     <div class="rule-text">
                         <h3>Soru Sor</h3>
-                        <p>Sadece <strong>Evet</strong> veya <strong>Hayır</strong> ile cevaplanabilecek sorular sor.</p>
+                        <p>Sadece <strong>Evet</strong> veya <strong>Hayır</strong> ile cevaplanabilecek sorular sor. Sorularını <strong>açık</strong> ve her seferinde <strong>tek bir soru</strong> olacak şekilde sormaya dikkat et.
+                        </p>
                     </div>
                 </div>
                 <div class="rule-item">
@@ -137,9 +152,11 @@
             <!-- Input Area -->
             <div class="input-area">
                 <div class="input-row">
-                    <input type="text" id="question-input" class="question-input" placeholder="Evet/Hayır sorusu sor..." autocomplete="off">
+                    <input type="text" id="question-input" class="question-input" placeholder="Evet/Hayır sorusu sor..."
+                        autocomplete="off">
                     <button id="btn-send" class="btn btn-send" title="Soruyu Gönder">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
                             <line x1="22" y1="2" x2="11" y2="13"></line>
                             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                         </svg>
@@ -209,4 +226,5 @@
 
     <script type="module" src="app.js"></script>
 </body>
+
 </html>

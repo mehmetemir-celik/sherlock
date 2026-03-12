@@ -8,22 +8,33 @@ const PROXY_URL = '/api/gemini';
  * Build the system prompt for the AI storyteller
  */
 function buildSystemPrompt(story) {
-    return `Sen "Sherlock Yes/No" adlı bir lateral thinking (yanal düşünce) bulmaca oyununda hikaye anlatıcısısın.
+    const hintsList = story.hints && story.hints.length > 0 ? story.hints.map(h => `- ${h}`).join('\n') : "Yok";
+    return `Sen "Sherlock Yes/No" adlı bir lateral thinking (yanal düşünce) bulmaca oyununda usta bir hikaye anlatıcısısın.
 
 ## Görevin
 Oyuncuya gizemli bir senaryo verildi. Oyuncu sana SADECE Evet/Hayır soruları sorabilir. Sen çözümü biliyorsun ama doğrudan söylememelisin. Sadece sorulan soruya göre cevap ver.
 
-## Senaryo
+## Hikaye: ${story.title || 'İsimsiz Hikaye'}
 ${story.scenario}
 
 ## Çözüm (BU BİLGİYİ ASLA DOĞRUDAN PAYLAŞMA)
 ${story.solution}
 
-## Kurallar
-1. ÖNCE sorunun Evet/Hayır sorusu olup olmadığını kontrol et.
-   - Eğer soru "neden", "nasıl", "kim", "ne", "nerede", "ne zaman", "kaç", "hangi" gibi açık uçlu bir soruysa veya Evet/Hayır ile cevaplanamayacak bir ifadeyse:
-     İlk satır: "UYARI"
-     İkinci satır: Oyuncuya bu oyunda sadece Evet/Hayır soruları sorulabileceğini hatırlat. Soruyu Evet/Hayır formatına çevirebileceğine dair kısa bir öneri ver.
+## Hikaye İpuçları (Oyuncuyu dolaylı olarak bu yönlere çekebilirsin)
+${hintsList}
+
+## Derinlemesine Düşünme (Chain of Thought - ZORUNLU)
+Cevap vermeden ÖNCE, kendi içinde mantıksal bir analiz yapmalısın. Bu analizi KESİNLİKLE <dusunce> ve </dusunce> etiketleri arasına yaz. Bu etiketlerin arasındaki metin oyuncuya GÖSTERİLMEYECEKTİR.
+Düşünme bölümünde:
+1. Oyuncunun sorusunun altında yatan mantığı analiz et.
+2. Çözümle ne kadar uyuştuğunu değerlendir.
+3. Vereceğin cevabın oyuncuyu çözüme yaklaştırıp yaklaştırmayacağını düşün.
+
+## Kurallar ve Format
+</dusunce> etiketini kapattıktan SONRA, KESİNLİKLE aşağıdaki formatta oyuncuya cevap ver:
+1. ÖNCE sorunun Evet/Hayır sorusu olup olmadığını kontrol et. Açık uçluysa (neden, kim vs.):
+   İlk satır: "UYARI"
+   İkinci satır: Oyuncuya bu oyunda sadece Evet/Hayır soruları sorulabileceğini hatırlat.
 
 2. Eğer soru Evet/Hayır sorusuysa, şu formatta cevap ver:
    - İlk satır: "EVET", "HAYIR" veya "ALAKASIZ" (büyük harfle)
@@ -33,33 +44,14 @@ ${story.solution}
 4. HAYIR: Soru çözümle çelişiyorsa
 5. ALAKASIZ: Soru hikayeyle ilgisi yoksa veya cevabı çözüm için önemsizse
 
-6. ASLA çözümü doğrudan söyleme.
-7. Oyuncuyu doğru yöne yönlendir ama cevabı verme.
-8. Kısa ve öz cevap ver. Fazla detay verme.
-9. Türkçe cevap ver.
-10. Eğer oyuncu çözüme çok yaklaştıysa, "Çok yaklaştın! 🔥" gibi teşvik edici bir ifade ekle.
-11. Eğlenceli ve gizemli bir ton kullan, bir dedektif hikayesindeki bilge karakter gibi davran.
+6. ASLA çözümü doğrudan söyleme. Oyuncuyu doğru yöne yönlendir ama cevabı verme.
 
 ## Örnek Cevap Formatı
-Soru: "Adam uzun boylu mu?"
-Cevap:
-HAYIR
-Hayır, adamın boyu ortalamanın altında. Bu önemli bir detay!
-
-Soru: "Hava durumu önemli mi?"
-Cevap:
+<dusunce>
+Oyuncu boyunu soruyor. Çözüm adamın cüce olması. Yani bu oldukça kritik. Evet demeliyim.
+</dusunce>
 EVET
-Evet! Hava durumu hikayede önemli bir rol oynuyor.
-
-Soru: "Adam neden merdiven çıkıyor?"
-Cevap:
-UYARI
-Bu oyunda sadece Evet/Hayır soruları sorabilirsin, dedektif! 🔍 Soruyu şöyle sormayı dene: "Adamın merdiven çıkmasının sebebi fiziksel bir özelliği mi?"
-
-Soru: "Çözüm ne?"
-Cevap:
-UYARI
-Hey dedektif, bu şekilde sormak olmaz! 🕵️ Sadece Evet/Hayır ile cevaplanabilecek sorular sor. Örneğin: "Çözüm bir kişiyle mi ilgili?"`;
+Evet, adamın fiziksel boyutu hikayede kritik bir detay.`;
 }
 
 /**
@@ -77,13 +69,17 @@ ${story.solution}
 ## Oyuncunun Tahmini
 ${userSolution}
 
-## Görev
-Oyuncunun tahminini gerçek çözümle karşılaştır. İlk satırda şu değerlendirmelerden birini yaz:
-- "DOGRU" — Oyuncu çözümün özünü doğru yakalamış (kelimesi kelimesine aynı olması gerekmez, ana fikir doğruysa yeterli)
-- "YAKIN" — Oyuncu doğru yolda ama bazı kritik detayları kaçırmış
-- "YANLIS" — Oyuncu yanlış bir çözüm sunmuş
+## Analiz (Chain of Thought - ZORUNLU)
+Önce <dusunce> ve </dusunce> etiketleri arasında oyuncunun tahminini detaylıca değerlendir. Gerçek çözümün kilit noktalarını kavramış mı? Sadece küçük detaylar mı eksik yoksa tamamen mi yanlış yolda? Bunu analiz et. Oyuncu bu düşünce bloğunu görmeyecektir.
 
-İkinci satırda kısa bir açıklama yaz. Eğer YANLIS ise çözümü verme, sadece neden yanlış olduğunu belirt.`;
+## Görev ve Format
+Düşünce bloğunu bitirdikten (</dusunce>) sonra, KESİNLİKLE şu şekilde cevap ver:
+İlk satırda:
+- "DOGRU" — Oyuncu ana fikri ve kritik detayı bilmiş
+- "YAKIN" — Doğru yolda ama kritik bir detay eksik
+- "YANLIS" — Çözümle uyuşmuyor
+
+İkinci satırda: Kısa bir geri bildirim yaz. (YANLIS ise asla gerçek çözümü verme!)`;
 }
 
 /**
@@ -132,7 +128,7 @@ async function askGemini(story, conversationHistory, question) {
             contents: contents,
             generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 200,
+                maxOutputTokens: 1000,
                 topP: 0.9
             }
         });
@@ -163,7 +159,7 @@ async function checkSolutionWithGemini(story, userSolution) {
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
             generationConfig: {
                 temperature: 0.3,
-                maxOutputTokens: 200,
+                maxOutputTokens: 1000,
                 topP: 0.9
             }
         });
@@ -182,9 +178,11 @@ async function checkSolutionWithGemini(story, userSolution) {
  * Parse AI response into structured format
  */
 function parseAIResponse(text) {
-    const lines = text.split('\n').filter(l => l.trim());
+    // Remove thought blocks if any
+    const cleanText = text.replace(/<dusunce>[\s\S]*?<\/dusunce>/gi, '').trim();
+    const lines = cleanText.split('\n').filter(l => l.trim());
     const firstLine = lines[0]?.toUpperCase().trim() || '';
-    const explanation = lines.slice(1).join(' ').trim() || text;
+    const explanation = lines.slice(1).join(' ').trim() || cleanText;
 
     if (firstLine.includes('EVET') || firstLine === 'EVET') {
         return { type: 'yes', text: explanation || 'Evet.', rawResponse: text };
@@ -212,7 +210,9 @@ function parseAIResponse(text) {
  * Parse solution check response
  */
 function parseSolutionResponse(text) {
-    const lines = text.split('\n').filter(l => l.trim());
+    // Remove thought blocks if any
+    const cleanText = text.replace(/<dusunce>[\s\S]*?<\/dusunce>/gi, '').trim();
+    const lines = cleanText.split('\n').filter(l => l.trim());
     const firstLine = lines[0]?.toUpperCase().trim() || '';
     const explanation = lines.slice(1).join(' ').trim() || '';
 
