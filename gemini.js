@@ -95,7 +95,10 @@ async function geminiRequest(requestBody) {
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('API error:', response.status, errorData);
-        throw new Error(`API error: ${response.status}`);
+        const error = new Error(errorData.text || `API error: ${response.status}`);
+        error.status = response.status;
+        error.serverText = errorData.text;
+        throw error;
     }
 
     return await response.json();
@@ -104,7 +107,7 @@ async function geminiRequest(requestBody) {
 /**
  * Send a question to Gemini and get a response
  */
-async function askGemini(story, conversationHistory, question) {
+async function askGemini(story, conversationHistory, question, cfToken) {
     const systemPrompt = buildSystemPrompt(story);
 
     // Build conversation contents
@@ -126,6 +129,7 @@ async function askGemini(story, conversationHistory, question) {
         const data = await geminiRequest({
             system_instruction: { parts: [{ text: systemPrompt }] },
             contents: contents,
+            cfToken: cfToken,
             generationConfig: {
                 temperature: 0.7,
                 maxOutputTokens: 1000,
@@ -141,7 +145,7 @@ async function askGemini(story, conversationHistory, question) {
         console.error('Gemini request failed:', error);
         return {
             type: 'irrelevant',
-            text: 'Bağlantı sorunu oluştu. Lütfen tekrar dene.',
+            text: error.serverText || 'Bağlantı sorunu oluştu. Lütfen tekrar dene.',
             rawResponse: '',
             error: true
         };
@@ -151,12 +155,13 @@ async function askGemini(story, conversationHistory, question) {
 /**
  * Check a solution attempt using Gemini
  */
-async function checkSolutionWithGemini(story, userSolution) {
+async function checkSolutionWithGemini(story, userSolution, cfToken) {
     const prompt = buildSolutionCheckPrompt(story, userSolution);
 
     try {
         const data = await geminiRequest({
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            cfToken: cfToken,
             generationConfig: {
                 temperature: 0.3,
                 maxOutputTokens: 1000,

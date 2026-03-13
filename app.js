@@ -16,7 +16,21 @@ const state = {
     solvedStories: new Set(JSON.parse(localStorage.getItem('sherlock-solved') || '[]')),
     scenarioCollapsed: false,
     filterDifficulty: 'all',
-    isProcessing: false        // Prevent double sends while API is working
+    isProcessing: false,        // Prevent double sends while API is working
+    turnstileToken: null,       // Session-level verification token
+    turnstileWidgetId: null,
+    isVerified: false,          // Is user verified for the session?
+    lastQuestionTime: 0,        // Timestamp of last question for cooldown
+    isMusicPlaying: true        // Global music state
+};
+
+// ============================================
+// GAME CONFIG
+// ============================================
+const GAME_CONFIG = {
+    MAX_QUESTIONS: 20,
+    COOLDOWN_MS: 3000,
+    TURNSTILE_SITEKEY: "0x4AAAAAACqPaEhb_TQ7Phaj" // Test key (always passes)
 };
 
 // ============================================
@@ -33,6 +47,8 @@ const DOM = {
 
     btnNewGame: $('#btn-new-game'),
     btnHowToPlay: $('#btn-how-to-play'),
+    splashButtons: $('.splash-buttons'),
+    turnstileWrapper: $('#turnstile-wrapper'),
 
     howToPlayModal: $('#how-to-play-modal'),
     modalClose: $('#modal-close'),
@@ -52,8 +68,11 @@ const DOM = {
     btnSend: $('#btn-send'),
     btnHint: $('#btn-hint'),
     btnSolve: $('#btn-solve'),
-    questionCountEl: $('#question-count'),
-    hintCountEl: $('#hint-count'),
+
+
+
+    btnMusicToggle: $('#btn-global-music'),
+    bgMusic: $('#bg-music'),
 
     solveModal: $('#solve-modal'),
     solveModalClose: $('#solve-modal-close'),
@@ -76,6 +95,49 @@ const DOM = {
 // ============================================
 function init() {
     bindEvents();
+    initTurnstile();
+    
+    // Set background music volume lower
+    if (DOM.bgMusic) {
+        DOM.bgMusic.volume = 0.2;
+    }
+
+    // Ensure music UI matches initial state
+    updateMusicUI();
+}
+
+function initTurnstile() {
+    if (window.turnstile) {
+        state.turnstileWidgetId = window.turnstile.render('#turnstile-container', {
+            sitekey: GAME_CONFIG.TURNSTILE_SITEKEY,
+            theme: 'dark',
+            callback: function (token) {
+                state.turnstileToken = token;
+                state.isVerified = true;
+                handleVerificationSuccess();
+            },
+            'error-callback': function () {
+                console.error("Turnstile failed to load or verify.");
+            }
+        });
+    } else {
+        setTimeout(initTurnstile, 1000); // Retry if script not loaded yet
+    }
+}
+
+function handleVerificationSuccess() {
+    const wrapper = DOM.turnstileWrapper;
+    const splashButtons = DOM.splashButtons;
+
+    if (wrapper) wrapper.style.display = 'none';
+    if (splashButtons) {
+        splashButtons.style.display = 'flex';
+        splashButtons.style.opacity = '0';
+        setTimeout(() => {
+            splashButtons.style.transition = 'opacity 0.5s ease';
+            splashButtons.style.opacity = '1';
+        }, 10);
+    }
 }
 
 function bindEvents() {
@@ -119,12 +181,58 @@ function bindEvents() {
             handleCheckSolution();
         }
     });
-    DOM.solveModal.addEventListener('click', (e) => {
-        if (e.target === DOM.solveModal) toggleModal(DOM.solveModal, false);
-    });
+    // Solve modal backdrop click closing disabled per user request
+    // DOM.solveModal.addEventListener('click', (e) => {
+    //     if (e.target === DOM.solveModal) toggleModal(DOM.solveModal, false);
+    // });
 
     DOM.btnNewPuzzle.addEventListener('click', () => switchScreen('story-select'));
     DOM.btnMainMenu.addEventListener('click', () => switchScreen('splash'));
+
+    // Music Toggle
+    DOM.btnMusicToggle.addEventListener('click', toggleMusic);
+
+    // Play music on FIRST interaction anywhere on the page (browser requirement)
+    const playOnInteraction = () => {
+        if (state.isMusicPlaying && DOM.bgMusic.paused) {
+            DOM.bgMusic.play().then(() => {
+                console.log("Music started successfully on interaction");
+            }).catch(e => console.log("Playback failed:", e));
+        }
+        document.removeEventListener('click', playOnInteraction);
+        document.removeEventListener('keydown', playOnInteraction);
+        document.removeEventListener('touchstart', playOnInteraction);
+    };
+
+    document.addEventListener('click', playOnInteraction);
+    document.addEventListener('keydown', playOnInteraction);
+    document.addEventListener('touchstart', playOnInteraction);
+}
+
+function toggleMusic() {
+    state.isMusicPlaying = !state.isMusicPlaying;
+    updateMusicUI();
+    
+    if (state.isMusicPlaying) {
+        DOM.bgMusic.play().catch(e => console.log("Play failed:", e));
+    } else {
+        DOM.bgMusic.pause();
+    }
+}
+
+function updateMusicUI() {
+    const iconOn = DOM.btnMusicToggle.querySelector('.icon-music-on');
+    const iconOff = DOM.btnMusicToggle.querySelector('.icon-music-off');
+
+    if (state.isMusicPlaying) {
+        if (iconOn) iconOn.style.display = 'block';
+        if (iconOff) iconOff.style.display = 'none';
+        DOM.btnMusicToggle.classList.add('active');
+    } else {
+        if (iconOn) iconOn.style.display = 'none';
+        if (iconOff) iconOff.style.display = 'block';
+        DOM.btnMusicToggle.classList.remove('active');
+    }
 }
 
 // ============================================
@@ -170,7 +278,7 @@ function renderStoryGrid() {
 
     DOM.storyGrid.innerHTML = stories.map(story => {
         const isSolved = state.solvedStories.has(story.id);
-        const difficultyStars = '⭐'.repeat(story.difficulty);
+        const difficultyStars = '🧥'.repeat(story.difficulty);
         const difficultyLabels = ['', 'Kolay', 'Orta', 'Zor'];
 
         return `
@@ -203,6 +311,9 @@ function startGame(storyId) {
     state.conversationHistory = [];
     state.scenarioCollapsed = false;
     state.isProcessing = false;
+    state.lastQuestionTime = 0;
+
+    // Turnstile reset removed from here, verification is now session-wide
 
     DOM.scenarioTitle.textContent = story.title;
     DOM.scenarioText.textContent = story.scenario;
@@ -216,7 +327,7 @@ function startGame(storyId) {
     DOM.questionInput.value = '';
     DOM.solveInput.value = '';
 
-    addChatBubble('system', '🔍 Senaryo hazır! Yapay zeka hikaye anlatıcın olarak burada. Evet/Hayır soruları sorarak gizemi çöz!');
+    addChatBubble('system', 'Senaryo hazır! Evet/Hayır soruları sorarak gizemi çöz!');
 
     switchScreen('game');
     setTimeout(() => DOM.questionInput.focus(), 500);
@@ -240,6 +351,27 @@ async function handleSendQuestion() {
     const question = DOM.questionInput.value.trim();
     if (!question || state.isProcessing) return;
 
+    // --- Limits and Security Checks ---
+    const now = Date.now();
+    if (now - state.lastQuestionTime < GAME_CONFIG.COOLDOWN_MS) {
+        addChatBubble('user', question);
+        addAIChatBubble({ type: 'warning', text: 'Çok hızlı soruyorsun! Lütfen birkaç saniye bekle.' });
+        DOM.questionInput.value = '';
+        return;
+    }
+
+    if (state.questionCount >= GAME_CONFIG.MAX_QUESTIONS) {
+        addAIChatBubble({ type: 'error', text: `Maksimum ${GAME_CONFIG.MAX_QUESTIONS} soru sınırına ulaştın! Artık çözümü tahmin edebilir ya da pes edebilirsin.` });
+        DOM.questionInput.value = '';
+        return;
+    }
+
+    if (!state.isVerified) {
+        addAIChatBubble({ type: 'warning', text: 'Güvenlik doğrulaması tamamlanmadı. Lütfen sayfayı yenileyin.' });
+        return;
+    }
+    // ----------------------------------
+
     state.isProcessing = true;
     setInputDisabled(true);
 
@@ -251,21 +383,25 @@ async function handleSendQuestion() {
     showTypingIndicator();
 
     try {
-        // Call Gemini API with conversation history
+        // Call Gemini API with conversation history and security token
         const answer = await askGemini(
             state.currentStory,
             state.conversationHistory,
-            question
+            question,
+            state.turnstileToken
         );
+
+        state.lastQuestionTime = Date.now();
 
         removeTypingIndicator();
 
         // If API failed, display an error message
         if (answer.error) {
             console.error('Gemini API failed:', answer.error);
+            // answer object usually has answer.text returned from server if it failed on purpose
             addAIChatBubble({
                 type: 'error',
-                text: 'Bağlantıda bir sorun oluştu. Lütfen tekrar dene!'
+                text: answer.text || 'Bağlantıda bir sorun oluştu. Lütfen tekrar dene!'
             });
         } else {
             // Only count valid yes/no questions (not warnings or errors)
@@ -318,6 +454,11 @@ async function handleHintRequest() {
     if (!state.currentStory || state.isProcessing) return;
     if (state.hintsUsed >= state.currentStory.hints.length) return;
 
+    if (!state.isVerified) {
+        addAIChatBubble({ type: 'warning', text: 'Güvenlik doğrulaması tamamlanmadı.' });
+        return;
+    }
+
     state.isProcessing = true;
     setInputDisabled(true);
 
@@ -336,7 +477,8 @@ async function handleHintRequest() {
         const aiHint = await askGemini(
             state.currentStory,
             state.conversationHistory,
-            hintQuestion
+            hintQuestion,
+            state.turnstileToken
         );
 
         removeTypingIndicator();
@@ -348,7 +490,7 @@ async function handleHintRequest() {
 
         addAIChatBubble({
             type: 'hint',
-            text: `💡 ${hintText}`
+            text: `${hintText}`
         });
 
         // Add to conversation history
@@ -372,8 +514,8 @@ function updateHintButton() {
     const remaining = state.currentStory.hints.length - state.hintsUsed;
     DOM.btnHint.disabled = remaining <= 0;
     DOM.btnHint.innerHTML = remaining > 0
-        ? `<span>💡</span> İpucu İste (${remaining})`
-        : `<span>💡</span> İpucu Kalmadı`;
+        ? `İpucu İste`
+        : `İpucu Kalmadı`;
 }
 
 // ============================================
@@ -383,21 +525,28 @@ async function handleCheckSolution() {
     const userSolution = DOM.solveInput.value.trim();
     if (!userSolution || state.isProcessing) return;
 
+    if (!state.isVerified) {
+        toggleModal(DOM.solveModal, false);
+        addAIChatBubble({ type: 'warning', text: 'Güvenlik doğrulaması tamamlanmadı.' });
+        return;
+    }
+
     state.isProcessing = true;
     toggleModal(DOM.solveModal, false);
 
-    addChatBubble('user', `🎯 Tahminim: ${userSolution}`);
+    addChatBubble('user', `Tahminim: ${userSolution}`);
     showTypingIndicator();
 
     try {
-        const result = await checkSolutionWithGemini(state.currentStory, userSolution);
+        const result = await checkSolutionWithGemini(state.currentStory, userSolution, state.turnstileToken);
+
         removeTypingIndicator();
 
         if (result.result === 'correct') {
             state.solvedStories.add(state.currentStory.id);
             localStorage.setItem('sherlock-solved', JSON.stringify([...state.solvedStories]));
 
-            addChatBubble('system', `🎉 ${result.text || 'Tebrikler! Doğru çözüme ulaştın!'}`);
+            addChatBubble('system', ` ${result.text || 'Tebrikler! Doğru çözüme ulaştın!'}`);
             setTimeout(() => showResult(true), 1200);
 
         } else if (result.result === 'close') {
@@ -491,19 +640,18 @@ function scrollChatToBottom() {
 // STATS
 // ============================================
 function updateStats() {
-    DOM.questionCountEl.textContent = state.questionCount;
-    DOM.hintCountEl.textContent = state.hintsUsed;
+    // Question count UI removed
 }
 
 // ============================================
 // RESULT SCREEN
 // ============================================
 function showResult(solved) {
-    DOM.resultIcon.textContent = solved ? '🏆' : '📋';
+    DOM.resultIcon.textContent = '';
     DOM.resultTitle.textContent = solved ? 'Tebrikler, Dedektif!' : 'Çözüm Açıklandı';
     DOM.resultQuestions.textContent = state.questionCount;
-    DOM.resultHints.textContent = state.hintsUsed;
-    DOM.resultDifficulty.textContent = '⭐'.repeat(state.currentStory.difficulty);
+    DOM.resultHints.textContent = state.hintsUsed > 0 ? 'Evet' : 'Hayır';
+    DOM.resultDifficulty.textContent = '🧥'.repeat(state.currentStory.difficulty);
     DOM.resultSolution.textContent = state.currentStory.solution;
 
     switchScreen('result');

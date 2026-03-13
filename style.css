@@ -452,6 +452,37 @@ body {
     color: var(--gold);
 }
 
+.splash-buttons {
+    display: none; /* Hidden until verified */
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Verification Styling */
+.turnstile-wrapper {
+    margin-bottom: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    animation: fadeIn 0.8s ease;
+}
+
+.verification-text {
+    font-family: 'Courier Prime', monospace;
+    color: var(--gold-light);
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    opacity: 0.8;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .difficulty-filters {
     display: flex;
     gap: var(--sp-sm);
@@ -554,8 +585,8 @@ body {
 
 .story-card-solved {
     position: absolute;
-    top: 15px;
-    right: 15px;
+    top: 20px;
+    right: 20px;
     background: transparent;
     color: var(--crimson-light);
     font-size: 1.1rem;
@@ -817,6 +848,20 @@ body {
     background: #e6decb;
 }
 
+.chat-bubble.system {
+    align-self: center;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: var(--text-muted-dark);
+    font-size: 0.85rem;
+    font-style: italic;
+    max-width: 100%;
+    text-align: center;
+    padding: var(--sp-sm) 0;
+    animation: fadeIn 1s ease;
+}
+
 .chat-answer-label.warning {
     color: #b85c00;
     background: transparent;
@@ -892,9 +937,9 @@ body {
 }
 
 .btn-send:hover {
-    transform: scale(1.05);
+    transform: translateY(-2px) scale(1.02);
     background: var(--gold-light);
-    box-shadow: 2px 4px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 6px 15px rgba(212, 168, 83, 0.4);
 }
 
 .action-buttons {
@@ -918,8 +963,10 @@ body {
 }
 
 .btn-hint:hover {
+    transform: translateY(-2px);
     background: var(--bg-paper-hover);
     border-color: var(--border-gold);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .btn-hint:disabled {
@@ -944,7 +991,8 @@ body {
 
 .btn-solve:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 20px rgba(192, 57, 43, 0.4);
+    background: var(--crimson-light);
+    box-shadow: 0 4px 20px rgba(162, 44, 39, 0.4);
 }
 
 /* ============================================
@@ -991,6 +1039,38 @@ body {
 /* ============================================
    RESULT SCREEN
    ============================================ */
+/* ============================================
+   GLOBAL MUSIC BUTTON
+   ============================================ */
+.btn-global-music {
+    position: fixed;
+    top: var(--sp-md);
+    right: var(--sp-md);
+    z-index: 1000;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--bg-paper);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-global-music:hover {
+    transform: scale(1.1);
+    background: var(--bg-paper-hover);
+    box-shadow: 0 4px 15px var(--gold-glow);
+}
+
+.btn-global-music svg {
+    transition: all 0.3s;
+}
+
 #result-screen {
     align-items: center;
     justify-content: center;

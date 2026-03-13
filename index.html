@@ -6,18 +6,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
         content="Sherlock Yes/No - Yapay zeka destekli yanal düşünmeli bulmaca oyunu. Gizemli senaryoları Evet/Hayır soruları sorarak çöz, gerçek bir dedektif ol!">
-    <title>Sherlock Yes/No</title>
+    <title>Sherlock Yes / No</title>
     <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕵️</text></svg>">
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2245%22 cy=%2245%22 r=%2230%22 fill=%22none%22 stroke=%22%23b58d3d%22 stroke-width=%228%22/><line x1=%2268%22 y1=%2268%22 x2=%2290%22 y2=%2290%22 stroke=%22%23b58d3d%22 stroke-width=%2210%22 stroke-linecap=%22round%22/><text x=%2245%22 y=%2258%22 font-family=%22serif%22 font-size=%2234%22 font-weight=%22bold%22 fill=%22%23b58d3d%22 text-anchor=%22middle%22>?</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 
 <body>
+    <!-- Global Music Player -->
+    <button id="btn-global-music" class="btn-global-music" title="Müziği Aç/Kapat">
+        <svg class="icon-music-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+        </svg>
+        <svg class="icon-music-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+        </svg>
+    </button>
+    <audio id="bg-music" loop>
+        <source src="background-music.mp3" type="audio/mpeg">
+    </audio>
+
     <!-- Ambient Decor -->
     <div class="decor-container">
         <div class="decor-item decor-1">🕵️</div>
@@ -44,14 +63,19 @@
             </div>
             <div class="splash-buttons">
                 <button id="btn-new-game" class="btn btn-primary">
-                    <span class="btn-icon">🔍</span>
                     <span>Yeni Oyun</span>
                 </button>
                 <button id="btn-how-to-play" class="btn btn-secondary">
-                    <span class="btn-icon">📖</span>
                     <span>Nasıl Oynanır?</span>
                 </button>
             </div>
+
+            <!-- Turnstile Verification Container -->
+            <div id="turnstile-wrapper" class="turnstile-wrapper">
+                <p class="verification-text">Güvenlik Doğrulaması:</p>
+                <div id="turnstile-container"></div>
+            </div>
+
             <div class="splash-footer">
                 <p>Gizemli senaryoları Evet/Hayır soruları sorarak çöz</p>
             </div>
@@ -75,7 +99,9 @@
                     <div class="rule-number">2</div>
                     <div class="rule-text">
                         <h3>Soru Sor</h3>
-                        <p>Sadece <strong>Evet</strong> veya <strong>Hayır</strong> ile cevaplanabilecek sorular sor. Sorularını <strong>açık</strong> ve her seferinde <strong>tek bir soru</strong> olacak şekilde sormaya dikkat et.
+                        <p>Sadece <strong>Evet</strong> veya <strong>Hayır</strong> ile cevaplanabilecek sorular sor.
+                            Sorularını <strong>açık</strong> ve her seferinde <strong>tek bir soru</strong> olacak
+                            şekilde sormaya dikkat et.
                         </p>
                     </div>
                 </div>
@@ -106,9 +132,9 @@
         </div>
         <div class="difficulty-filters">
             <button class="filter-btn active" data-difficulty="all">Tümü</button>
-            <button class="filter-btn" data-difficulty="1">⭐ Kolay</button>
-            <button class="filter-btn" data-difficulty="2">⭐⭐ Orta</button>
-            <button class="filter-btn" data-difficulty="3">⭐⭐⭐ Zor</button>
+            <button class="filter-btn" data-difficulty="1">🧥​ Kolay</button>
+            <button class="filter-btn" data-difficulty="2">🧥​🧥​ Orta</button>
+            <button class="filter-btn" data-difficulty="3">🧥​🧥​🧥​ Zor</button>
         </div>
         <div id="story-grid" class="story-grid">
             <!-- Stories will be injected here -->
@@ -119,18 +145,7 @@
     <section id="game-screen" class="screen">
         <div class="game-header">
             <button id="btn-back-select" class="btn-back">← Bulmacalar</button>
-            <div class="game-stats">
-                <div class="stat" id="stat-questions">
-                    <span class="stat-icon">❓</span>
-                    <span class="stat-value" id="question-count">0</span>
-                    <span class="stat-label">Soru</span>
-                </div>
-                <div class="stat" id="stat-hints">
-                    <span class="stat-icon">💡</span>
-                    <span class="stat-value" id="hint-count">0</span>
-                    <span class="stat-label">İpucu</span>
-                </div>
-            </div>
+
         </div>
 
         <div class="game-body">
@@ -162,12 +177,13 @@
                         </svg>
                     </button>
                 </div>
+
                 <div class="action-buttons">
                     <button id="btn-hint" class="btn btn-hint">
-                        <span>💡</span> İpucu İste
+                        İpucu İste
                     </button>
                     <button id="btn-solve" class="btn btn-solve">
-                        <span>🎯</span> Çözümü Tahmin Et
+                        Çözümü Tahmin Et
                     </button>
                 </div>
             </div>
@@ -178,7 +194,7 @@
     <div id="solve-modal" class="modal">
         <div class="modal-content solve-modal-content">
             <button id="solve-modal-close" class="modal-close">&times;</button>
-            <h2>🎯 Çözümünü Yaz</h2>
+            <h2>Çözümünü Yaz</h2>
             <p class="solve-hint-text">Hikayenin arkasındaki gerçeği açıkla:</p>
             <textarea id="solve-input" class="solve-textarea" placeholder="Bence olan şuydu..." rows="4"></textarea>
             <div class="solve-buttons">
@@ -200,8 +216,8 @@
                         <span class="result-stat-value" id="result-questions">0</span>
                     </div>
                     <div class="result-stat">
-                        <span class="result-stat-label">Kullanılan İpucu</span>
-                        <span class="result-stat-value" id="result-hints">0</span>
+                        <span class="result-stat-label">İpucu Kullanıldı mı?</span>
+                        <span class="result-stat-value" id="result-hints">Hayır</span>
                     </div>
                     <div class="result-stat">
                         <span class="result-stat-label">Zorluk</span>
@@ -215,10 +231,10 @@
             </div>
             <div class="result-buttons">
                 <button id="btn-new-puzzle" class="btn btn-primary">
-                    <span>🔍</span> Yeni Bulmaca
+                    Yeni Bulmaca
                 </button>
                 <button id="btn-main-menu" class="btn btn-secondary">
-                    <span>🏠</span> Ana Menü
+                    Ana Menü
                 </button>
             </div>
         </div>
