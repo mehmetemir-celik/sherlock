@@ -9,6 +9,7 @@ const state = {
     currentScreen: 'splash',
     currentStory: null,
     questionCount: 0,
+    guessCount: 0,
     hintCount: 0,
     hintsUsed: 0,
     chatHistory: [],           // UI display history
@@ -21,7 +22,8 @@ const state = {
     turnstileWidgetId: null,
     isVerified: false,          // Is user verified for the session?
     lastQuestionTime: 0,        // Timestamp of last question for cooldown
-    isMusicPlaying: true        // Global music state
+    isMusicPlaying: true,       // Global music state
+    musicVolume: parseFloat(localStorage.getItem('sherlock-volume') || '1.0')
 };
 
 // ============================================
@@ -73,6 +75,7 @@ const DOM = {
 
     btnMusicToggle: $('#btn-global-music'),
     bgMusic: $('#bg-music'),
+    volumeSlider: $('#volume-slider'),
 
     solveModal: $('#solve-modal'),
     solveModalClose: $('#solve-modal-close'),
@@ -83,6 +86,7 @@ const DOM = {
     resultIcon: $('#result-icon'),
     resultTitle: $('#result-title'),
     resultQuestions: $('#result-questions'),
+    resultGuesses: $('#result-guesses'),
     resultHints: $('#result-hints'),
     resultDifficulty: $('#result-difficulty'),
     resultSolution: $('#result-solution'),
@@ -96,10 +100,14 @@ const DOM = {
 function init() {
     bindEvents();
     initTurnstile();
-    
+
     // Set background music volume lower
     if (DOM.bgMusic) {
-        DOM.bgMusic.volume = 0.2;
+        DOM.bgMusic.volume = state.musicVolume * 0.1; // Scale volume to be much lower (10% of slider)
+        if (DOM.volumeSlider) {
+            DOM.volumeSlider.value = state.musicVolume;
+            updateVolumeTrack(state.musicVolume);
+        }
     }
 
     // Ensure music UI matches initial state
@@ -146,8 +154,18 @@ function bindEvents() {
 
     DOM.modalClose.addEventListener('click', () => toggleModal(DOM.howToPlayModal, false));
     DOM.modalGotIt.addEventListener('click', () => toggleModal(DOM.howToPlayModal, false));
-    DOM.howToPlayModal.addEventListener('click', (e) => {
-        if (e.target === DOM.howToPlayModal) toggleModal(DOM.howToPlayModal, false);
+    // Modal background click handling removed as requested
+
+    // Global ESC key listener
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (DOM.solveModal.classList.contains('active')) {
+                toggleModal(DOM.solveModal, false);
+            }
+            if (DOM.howToPlayModal.classList.contains('active')) {
+                toggleModal(DOM.howToPlayModal, false);
+            }
+        }
     });
 
     DOM.btnBackSplash.addEventListener('click', () => switchScreen('splash'));
@@ -181,16 +199,36 @@ function bindEvents() {
             handleCheckSolution();
         }
     });
-    // Solve modal backdrop click closing disabled per user request
-    // DOM.solveModal.addEventListener('click', (e) => {
-    //     if (e.target === DOM.solveModal) toggleModal(DOM.solveModal, false);
-    // });
+    // Modal background click handling removed as requested
 
     DOM.btnNewPuzzle.addEventListener('click', () => switchScreen('story-select'));
     DOM.btnMainMenu.addEventListener('click', () => switchScreen('splash'));
 
     // Music Toggle
     DOM.btnMusicToggle.addEventListener('click', toggleMusic);
+
+    // Volume Slider
+    if (DOM.volumeSlider) {
+        DOM.volumeSlider.addEventListener('input', (e) => {
+            const vol = parseFloat(e.target.value);
+            state.musicVolume = vol;
+            if (DOM.bgMusic) DOM.bgMusic.volume = vol * 0.1; // Scale volume to be much lower (10% of slider)
+            localStorage.setItem('sherlock-volume', vol);
+            updateVolumeTrack(vol);
+
+            // If volume is > 0 and was muted, maybe unmute? 
+            // Better to let toggle handle it, but update state if needed
+            if (vol > 0 && !state.isMusicPlaying) {
+                state.isMusicPlaying = true;
+                updateMusicUI();
+                DOM.bgMusic.play();
+            } else if (vol === 0 && state.isMusicPlaying) {
+                state.isMusicPlaying = false;
+                updateMusicUI();
+                DOM.bgMusic.pause();
+            }
+        });
+    }
 
     // Play music on FIRST interaction anywhere on the page (browser requirement)
     const playOnInteraction = () => {
@@ -207,12 +245,26 @@ function bindEvents() {
     document.addEventListener('click', playOnInteraction);
     document.addEventListener('keydown', playOnInteraction);
     document.addEventListener('touchstart', playOnInteraction);
+
+    // Pause music when tab is in background
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            if (state.isMusicPlaying && DOM.bgMusic && !DOM.bgMusic.paused) {
+                DOM.bgMusic.pause();
+            }
+        } else {
+            // Tab is active again
+            if (state.isMusicPlaying && DOM.bgMusic && DOM.bgMusic.paused) {
+                DOM.bgMusic.play().catch(e => console.log("Auto-resume failed:", e));
+            }
+        }
+    });
 }
 
 function toggleMusic() {
     state.isMusicPlaying = !state.isMusicPlaying;
     updateMusicUI();
-    
+
     if (state.isMusicPlaying) {
         DOM.bgMusic.play().catch(e => console.log("Play failed:", e));
     } else {
@@ -233,6 +285,12 @@ function updateMusicUI() {
         if (iconOff) iconOff.style.display = 'block';
         DOM.btnMusicToggle.classList.remove('active');
     }
+}
+
+function updateVolumeTrack(value) {
+    if (!DOM.volumeSlider) return;
+    const percent = value * 100;
+    DOM.volumeSlider.style.background = `linear-gradient(to right, var(--gold) ${percent}%, rgba(181, 141, 61, 0.2) ${percent}%)`;
 }
 
 // ============================================
@@ -266,6 +324,9 @@ function switchScreen(screenName) {
 
 function toggleModal(modal, show) {
     modal.classList.toggle('active', show);
+    if (show && modal === DOM.solveModal) {
+        setTimeout(() => DOM.solveInput.focus(), 100);
+    }
 }
 
 // ============================================
@@ -305,6 +366,7 @@ function startGame(storyId) {
 
     state.currentStory = story;
     state.questionCount = 0;
+    state.guessCount = 0;
     state.hintCount = 0;
     state.hintsUsed = 0;
     state.chatHistory = [];
@@ -321,13 +383,12 @@ function startGame(storyId) {
     DOM.btnToggleScenario.textContent = 'Senaryoyu Gizle ▲';
 
     DOM.chatMessages.innerHTML = '';
-    updateStats();
     updateHintButton();
 
     DOM.questionInput.value = '';
     DOM.solveInput.value = '';
 
-    addChatBubble('system', 'Senaryo hazır! Evet/Hayır soruları sorarak gizemi çöz!');
+    addChatBubble('system', 'Senaryo hazır! Evet/Hayır soruları sorarak gizemi çöz, Dedektif!');
 
     switchScreen('game');
     setTimeout(() => DOM.questionInput.focus(), 500);
@@ -407,7 +468,6 @@ async function handleSendQuestion() {
             // Only count valid yes/no questions (not warnings or errors)
             if (answer.type !== 'warning') {
                 state.questionCount++;
-                updateStats();
             }
 
             // Add to conversation history for context
@@ -465,14 +525,19 @@ async function handleHintRequest() {
     const hint = state.currentStory.hints[state.hintsUsed];
     state.hintsUsed++;
     state.hintCount++;
-    updateStats();
     updateHintButton();
 
     // Also ask Gemini for a contextual hint based on conversation so far
     showTypingIndicator();
 
     try {
-        const hintQuestion = `Oyuncuya bir ipucu ver. Çözümü söyleme ama doğru yöne yönlendir. Şimdiye kadar sorduğu sorulara göre neyi kaçırıyor olabilir? Kısa ve öz cevap ver. (Bu bir ipucu isteği, normal soru değil.)`;
+        const hintQuestion = `Oyuncuya bir ipucu ver. 
+        Gereksinimler:
+        1. Çözümü söyleme ama doğru yöne yönlendir. 
+        2. Şimdiye kadar sorduğu sorulara göre neyi kaçırıyor olabilir? 
+        3. Kısa ve öz cevap ver. 
+        4. Analizini KESİNLİKLE <dusunce></dusunce> etiketleri içine yaz.
+        5. Cevabına asla "İPUCU:" veya benzeri bir önek ekleme, doğrudan ipucunu yaz.`;
 
         const aiHint = await askGemini(
             state.currentStory,
@@ -532,6 +597,7 @@ async function handleCheckSolution() {
     }
 
     state.isProcessing = true;
+    state.guessCount++;
     toggleModal(DOM.solveModal, false);
 
     addChatBubble('user', `Tahminim: ${userSolution}`);
@@ -547,11 +613,11 @@ async function handleCheckSolution() {
             localStorage.setItem('sherlock-solved', JSON.stringify([...state.solvedStories]));
 
             addChatBubble('system', ` ${result.text || 'Tebrikler! Doğru çözüme ulaştın!'}`);
-            setTimeout(() => showResult(true), 1200);
+            setTimeout(() => showResult(true), 5000);
 
         } else if (result.result === 'close') {
             addAIChatBubble({
-                type: 'hint',
+                type: 'guess',
                 text: result.text || 'Yaklaştın ama tam olarak değil. Biraz daha düşün! 🤔'
             });
 
@@ -563,7 +629,7 @@ async function handleCheckSolution() {
             });
         } else {
             addAIChatBubble({
-                type: 'no',
+                type: 'guess',
                 text: result.text || 'Bu doğru çözüm değil. Soru sormaya devam et! 🔍'
             });
         }
@@ -598,6 +664,7 @@ function addAIChatBubble(answer) {
         'no': 'Hayır',
         'irrelevant': 'Alakasız',
         'hint': 'İpucu',
+        'guess': 'Tahmin',
         'warning': 'Uyarı',
         'error': 'Hata'
     };
@@ -631,16 +698,13 @@ function removeTypingIndicator() {
 }
 
 function scrollChatToBottom() {
-    requestAnimationFrame(() => {
-        DOM.chatArea.scrollTop = DOM.chatArea.scrollHeight;
-    });
-}
-
-// ============================================
-// STATS
-// ============================================
-function updateStats() {
-    // Question count UI removed
+    // Small delay to ensure DOM has updated and layout is finalized
+    // This also helps with the bubble-in animation
+    setTimeout(() => {
+        if (DOM.chatArea) {
+            DOM.chatArea.scrollTop = DOM.chatArea.scrollHeight;
+        }
+    }, 100);
 }
 
 // ============================================
@@ -650,6 +714,7 @@ function showResult(solved) {
     DOM.resultIcon.textContent = '';
     DOM.resultTitle.textContent = solved ? 'Tebrikler, Dedektif!' : 'Çözüm Açıklandı';
     DOM.resultQuestions.textContent = state.questionCount;
+    DOM.resultGuesses.textContent = state.guessCount;
     DOM.resultHints.textContent = state.hintsUsed > 0 ? 'Evet' : 'Hayır';
     DOM.resultDifficulty.textContent = '🧥'.repeat(state.currentStory.difficulty);
     DOM.resultSolution.textContent = state.currentStory.solution;

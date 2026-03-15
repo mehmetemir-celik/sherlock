@@ -20,7 +20,7 @@ export default async (req) => {
 
     try {
         const body = await req.json();
-        const { cfToken, ...geminiData } = body;
+        const { cfToken, metadata, ...geminiData } = body;
         
         // 1. Get Client IP Address
         const clientIp = req.headers.get('x-nf-client-connection-ip') || req.headers.get('x-forwarded-for') || 'unknown-ip';
@@ -76,7 +76,7 @@ export default async (req) => {
             }
         }
 
-        // 3. Upstash Redis IP Rate Limiting (Dual Window: 10/min AND 50/hour)
+        // 3. Upstash Redis IP Rate Limiting (Dual Window: 4/min AND 100/hour)
         if (REDIS_URL && REDIS_TOKEN) {
             const minuteKey = `ratelimit:min:${clientIp}`;
             const hourKey = `ratelimit:hour:${clientIp}`;
@@ -104,13 +104,13 @@ export default async (req) => {
             if (expirePromises.length > 0) await Promise.all(expirePromises);
             
             // Limit checks
-            if (minCount > 3) {
+            if (minCount > 4) {
                 return new Response(JSON.stringify({ error: 'Rate limit exceeded', text: 'Çok hızlı soru soruyorsunuz! Lütfen bir dakika bekleyip tekrar deneyin.' }), {
                     status: 429, headers: { 'Content-Type': 'application/json' }
                 });
             }
-            if (hourCount > 50) {
-                return new Response(JSON.stringify({ error: 'Rate limit exceeded', text: 'Saatlik maksimum istek limitinize (50) ulaştınız. Lütfen bir saat sonra tekrar deneyin.' }), {
+            if (hourCount > 100) {
+                return new Response(JSON.stringify({ error: 'Rate limit exceeded', text: 'Saatlik maksimum istek limitinize (100) ulaştınız. Lütfen bir saat sonra tekrar deneyin.' }), {
                     status: 429, headers: { 'Content-Type': 'application/json' }
                 });
             }
@@ -133,6 +133,29 @@ export default async (req) => {
                 status: response.status,
                 headers: { 'Content-Type': 'application/json' }
             });
+        }
+
+        // 5. Log to Redis (Asynchronous)
+        if (REDIS_URL && REDIS_TOKEN) {
+            const answerText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+            const logEntry = {
+                time: new Date().toISOString(),
+                ip: clientIp,
+                story: metadata?.story || "Unknown",
+                type: metadata?.type || "unknown",
+                query: metadata?.text || "Unknown",
+                answer: answerText.slice(0, 500) // First 500 chars
+            };
+
+            // Use LPUSH to keep a history of events
+            fetch(REDIS_URL, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${REDIS_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(['LPUSH', 'sherlock:logs', JSON.stringify(logEntry)])
+            }).catch(err => console.error("Logging to Redis failed:", err));
         }
 
         return new Response(JSON.stringify(data), {

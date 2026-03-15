@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="Sherlock Yes/No - Yapay zeka destekli yanal düşünmeli bulmaca oyunu. Gizemli senaryoları Evet/Hayır soruları sorarak çöz, gerçek bir dedektif ol!">
-    <title>Sherlock Yes / No</title>
+        content="Sherlock Yes/No - Yanal düşünmeli bulmaca oyunu. Gizemli senaryoları Evet/Hayır soruları sorarak çöz, gerçek bir dedektif ol!">
+    <title>Sherlock Yes/No</title>
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2245%22 cy=%2245%22 r=%2230%22 fill=%22none%22 stroke=%22%23b58d3d%22 stroke-width=%228%22/><line x1=%2268%22 y1=%2268%22 x2=%2290%22 y2=%2290%22 stroke=%22%23b58d3d%22 stroke-width=%2210%22 stroke-linecap=%22round%22/><text x=%2245%22 y=%2258%22 font-family=%22serif%22 font-size=%2234%22 font-weight=%22bold%22 fill=%22%23b58d3d%22 text-anchor=%22middle%22>?</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,20 +19,25 @@
 
 <body>
     <!-- Global Music Player -->
-    <button id="btn-global-music" class="btn-global-music" title="Müziği Aç/Kapat">
-        <svg class="icon-music-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-        </svg>
-        <svg class="icon-music-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-            <line x1="23" y1="9" x2="17" y2="15"></line>
-            <line x1="17" y1="9" x2="23" y2="15"></line>
-        </svg>
-    </button>
+    <div class="music-control-container">
+        <button id="btn-global-music" class="btn-global-music" title="Müziği Aç/Kapat">
+            <svg class="icon-music-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+            <svg class="icon-music-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <line x1="23" y1="9" x2="17" y2="15"></line>
+                <line x1="17" y1="9" x2="23" y2="15"></line>
+            </svg>
+        </button>
+        <div class="volume-slider-container">
+            <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1.0">
+        </div>
+    </div>
     <audio id="bg-music" loop>
         <source src="background-music.mp3" type="audio/mpeg">
     </audio>
@@ -92,7 +97,7 @@
                     <div class="rule-number">1</div>
                     <div class="rule-text">
                         <h3>Senaryoyu Oku</h3>
-                        <p>Yapay zeka sana gizemli bir senaryo sunar. Senaryoda bir sır gizlidir.</p>
+                        <p>Gizemli bir senaryonun çözümü için seni seçtiler.</p>
                     </div>
                 </div>
                 <div class="rule-item">
@@ -100,7 +105,8 @@
                     <div class="rule-text">
                         <h3>Soru Sor</h3>
                         <p>Sadece <strong>Evet</strong> veya <strong>Hayır</strong> ile cevaplanabilecek sorular sor.
-                            Sorularını <strong>açık</strong> ve her seferinde <strong>tek bir soru</strong> olacak
+                            Sorularını <strong>düzgün bir dille</strong> ve her seferinde <strong>tek bir
+                                soru</strong> olacak
                             şekilde sormaya dikkat et.
                         </p>
                     </div>
@@ -108,7 +114,7 @@
                 <div class="rule-item">
                     <div class="rule-number">3</div>
                     <div class="rule-text">
-                        <h3>İpuçlarını Değerlendir</h3>
+                        <h3>Kanıtları Değerlendir</h3>
                         <p>Cevapları birleştirerek çözüme ulaşmaya çalış. Takılırsan ipucu isteyebilirsin.</p>
                     </div>
                 </div>
@@ -145,7 +151,6 @@
     <section id="game-screen" class="screen">
         <div class="game-header">
             <button id="btn-back-select" class="btn-back">← Bulmacalar</button>
-
         </div>
 
         <div class="game-body">
@@ -214,6 +219,10 @@
                     <div class="result-stat">
                         <span class="result-stat-label">Toplam Soru</span>
                         <span class="result-stat-value" id="result-questions">0</span>
+                    </div>
+                    <div class="result-stat">
+                        <span class="result-stat-label">Toplam Tahmin</span>
+                        <span class="result-stat-value" id="result-guesses">0</span>
                     </div>
                     <div class="result-stat">
                         <span class="result-stat-label">İpucu Kullanıldı mı?</span>
