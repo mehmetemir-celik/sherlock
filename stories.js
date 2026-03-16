@@ -5,11 +5,11 @@ const STORIES = [
     title: "Çıkmayan Asansör",
     scenario: "Bir adam, bir binanın 15. katında yaşıyor. Her sabah asansöre biner, zemin kata iner ve işe gider. Akşam döndüğünde ise asansöre biner, 7. kata çıkar ve kalan 8 katı yürüyerek çıkar. Yağmurlu günlerde ise doğrudan 15. kata çıkar. Neden?",
     solution: "Adam çok kısadır. Asansör düğmelerinde sadece 7. kata kadar uzanabilir. Yağmurlu günlerde şemsiyesi olur ve şemsiyesiyle 15. kat düğmesine basabilir.",
+    customRules: "- Adamın 'cüce' olduğu veya 'boyunun kısa' olduğu bilgisi asıl sürprizdir. Oyuncu bu kelimeleri bizzat kullanmadıkça (veya 'boy' ile ilgili bir soru sormadıkça) cevaplarında 'boy', 'kısa', 'yetişememek' gibi kelimeleri kullanma.\n- Oyuncu 'şemsiye' kelimesini kullanmadan asla şemsiyeden bahsetme. Şemsiye sorulursa sadece 'Evet, o gün yanında bir eşya vardı' gibi kapalı cevaplar ver.\n- 'Düğmelere basmak' eylemini oyuncu bulana kadar açıklama.",
     difficulty: 2,
     hints: [
       "Görünüşte mantıksız gelen bu davranış, adamın bir fiziksel özelliğinden kaynaklanıyor."
-    ],
-    customRules: "Bu hikayede adam hayattadır ve her gün rutin işine gitmektedir. Oyuncu 'Adam öldü mü?' veya benzeri bir yaşam/ölüm sorusu sorarsa HAYIR cevabı ver ve ölmediğini, rutin bir hayatı olduğunu vurgula."
+    ]
   },
   {
     id: "olum-tarlasi",
@@ -20,7 +20,7 @@ const STORIES = [
     hints: [
       "Adam ekstremsporları seviyordu."
     ],
-    customRules: "Adamın 'paraşütle atladığı' veya tarlaya 'düştüğü' bilgisi asıl sürprizdir. Oyuncu henüz bu bilgiyi kendisi bulmadan, cevaplarında 'adamın düştüğü', 'yüksekten atladığı', 'havadan geldiği' gibi bilgileri KESİNLİKLE ağzından kaçırma."
+    customRules: "Adamın 'paraşütle atladığı' veya tarlaya 'düştüğü' bilgisi asıl sürprizdir. Oyuncu bu kavramları (paraşüt, düşmek, uçak vb.) kendisi telaffuz edene kadar, cevaplarında bu bilgileri KESİNLİKLE ağzından kaçırma."
   },
   {
     id: "restoran-silah",
@@ -31,7 +31,7 @@ const STORIES = [
     hints: [
       "Barmenin sert tepkisi aslında garip bir tedavi yöntemiydi."
     ],
-    customRules: "- Kadının 'hıçkırığı' vardı. Ancak oyuncu 'Kadın hasta mı?', 'Bir hastalığı mı var?' veya 'Fiziksel bir sakatlığı mı var?' diye sorarsa HAYIR de. Çünkü hıçkırık bir hastalık değil geçici bir reflekstir.\n- Oyuncu bulana kadar 'hıçkırık', 'korkutmak' kelimelerini KESİNLİKLE ağzından kaçırma."
+    customRules: "- Kadının 'hıçkırığı' vardı. Ancak oyuncu 'Kadın hasta mı?', 'Bir hastalığı mı var?' veya 'Fiziksel bir sakatlığı mı var?' diye sorarsa HAYIR de. Çünkü hıçkırık bir hastalık değildir.\n- Oyuncu 'hıçkırık' veya 'korkutmak' kelimelerini bizzat kullanana kadar bu kelimeleri asla telaffuz etme. Oyuncu bu kelimeleri kullanarak soru sorarsa dürüstçe onayla."
   },
   {
     id: "muzik-intihar",
@@ -80,6 +80,7 @@ const STORIES = [
     title: "Kız Kardeşler",
     scenario: "İki kız kardeş aynı yıl, aynı ay, aynı gün, aynı saatte, aynı anne ve babadan doğmuşlardır. Ama ikiz değillerdir. Bu nasıl mümkün?",
     solution: "Üçüz kardeştirler. İkiz olmamak, ikiden fazla kardeş olabilecekleri anlamına gelir.",
+    customRules: "- Bu hikayede ana gizem kardeşlerin 'üçüz' (veya dördüz vb.) olmasıdır. Oyuncu 'üçüz' kelimesini kullanmadan veya 'iki kardeşten fazlalar mı?' diye sormadan asla üçüncü bir kişiden bahsetme.\n- Oyuncu 'üçüz' kelimesini bulana kadar sadece sorulan detayı onayla. Örneğin '3. bir çocuk mu var?' sorusuna sadece 'EVET' de ve 'Evet, ailede doğum günü aynı olan sadece iki kişi yok' gibi kapalı bir açıklama yap. 'Üçüz' kelimesini ASLA sen kullanma.",
     difficulty: 1,
     hints: [
       "Kalabalık bir ailelerdi."
