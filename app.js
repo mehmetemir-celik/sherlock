@@ -30,7 +30,7 @@ const state = {
 // GAME CONFIG
 // ============================================
 const GAME_CONFIG = {
-    MAX_QUESTIONS: 20,
+    MAX_QUESTIONS: 999,
     COOLDOWN_MS: 3000,
     TURNSTILE_SITEKEY: "0x4AAAAAACqPaEhb_TQ7Phaj" // Test key (always passes)
 };
@@ -421,11 +421,8 @@ async function handleSendQuestion() {
         return;
     }
 
-    if (state.questionCount >= GAME_CONFIG.MAX_QUESTIONS) {
-        addAIChatBubble({ type: 'error', text: `Maksimum ${GAME_CONFIG.MAX_QUESTIONS} soru sınırına ulaştın! Artık çözümü tahmin edebilir ya da pes edebilirsin.` });
-        DOM.questionInput.value = '';
-        return;
-    }
+    // Limit kontrolü kaldırıldı (Sınırsız soru)
+
 
     if (!state.isVerified) {
         addAIChatBubble({ type: 'warning', text: 'Güvenlik doğrulaması tamamlanmadı. Lütfen sayfayı yenileyin.' });

@@ -144,7 +144,7 @@ export default async (req) => {
                 story: metadata?.story || "Unknown",
                 type: metadata?.type || "unknown",
                 query: metadata?.text || "Unknown",
-                answer: answerText.slice(0, 500) // First 500 chars
+                answer: answerText
             };
 
             // Use LPUSH to keep a history of events
