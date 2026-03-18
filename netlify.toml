@@ -4,3 +4,125 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://*.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.upstash.io https://*.googleapis.com; frame-src https://challenges.cloudflare.com;"
+
+# Block common attack paths
+[[redirects]]
+  from = "/.env"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/config/*"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/wp-admin/*"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/secrets/*"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/secrets.yml"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/secrets.yaml"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/secrets.json"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/credentials.json"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/credentials.txt"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/docker-compose.yml"
+  to = "/404"
+  status = 404
+  force = true
+
+
+[[redirects]]
+  from = "/.vscode/*"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/api/v1/*"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/api/payment/*"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/api/stripe/*"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/api/settings"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/api/config"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "https://sherlock-yes-or-no.netlify.app/*"
+  to = "https://sherlockyesno.online/:splat"
+  status = 301
+  force = true
+
+

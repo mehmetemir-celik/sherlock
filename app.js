@@ -32,7 +32,8 @@ const state = {
 const GAME_CONFIG = {
     MAX_QUESTIONS: 999,
     COOLDOWN_MS: 3000,
-    TURNSTILE_SITEKEY: "0x4AAAAAACqPaEhb_TQ7Phaj" // Test key (always passes)
+    // ============================================
+    TURNSTILE_SITEKEY: "0x4AAAAAACsdrp0xoPwqiq-z"
 };
 
 // ============================================
@@ -666,10 +667,13 @@ function addAIChatBubble(answer) {
         'error': 'Hata'
     };
 
+    const textContainer = document.createElement('div');
+    textContainer.textContent = answer.text;
+
     bubble.innerHTML = `
         <span class="chat-answer-label ${answer.type}">${labelMap[answer.type] || '—'}</span>
-        <div>${answer.text}</div>
     `;
+    bubble.appendChild(textContainer);
 
     DOM.chatMessages.appendChild(bubble);
     scrollChatToBottom();
