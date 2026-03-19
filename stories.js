@@ -9,7 +9,7 @@ const STORIES = [
     hints: [
       "Süre, zehrin içeceğe ne kadar sürede nüfuz ettiği ile ilgilidir."
     ],
-    customRules: "- Zehrin çayda değil, buzda olduğunu anlamaları kritik. 'Zehir baştan beri çayda mıydı?' sorusuna HAYIR veya 'Tam olarak değil' gibi dolaylı cevap ver. 'Zehir buzda mıydı?' sorusuna EVET ver."
+    customRules: "Zehrin çayda değil, buzda olduğunu anlamaları kritik. 'Zehir çayın/sıvının içinde miydi?' sorusuna HAYIR de. Ancak oyuncu kapsayıcı bir soru sorup 'Zehir bardakta mıydı?' veya 'İçecekte miydi?' derse, buz da bardağın içinde olduğu için EVET de."
   },
   {
     id: "adam-ve-asansor",
