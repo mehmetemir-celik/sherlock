@@ -7,12 +7,13 @@
     <meta name="description"
         content="Sherlock Yes/No - Yanal düşünmeli bulmaca oyunu. Gizemli senaryoları Evet/Hayır soruları sorarak çöz, gerçek bir dedektif ol!">
     <title>Sherlock Yes/No - Gerçek Bir Dedektif Ol!</title>
-    
+
     <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://sherlock-yesno.netlify.app/">
     <meta property="og:title" content="Sherlock Yes/No - Gizemi Çözebilir Misin?">
-    <meta property="og:description" content="Evet/Hayır soruları sorarak gizemli senaryoların arkasındaki gerçeği bul. Üyelik gerektirmez, hemen oyna!">
+    <meta property="og:description"
+        content="Evet/Hayır soruları sorarak gizemli senaryoların arkasındaki gerçeği bul. Üyelik gerektirmez, hemen oyna!">
     <meta property="og:image" content="og-preview.png">
 
     <!-- Twitter -->
@@ -31,10 +32,12 @@
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 
-<body>
-    <!-- Global Music Player -->
-    <div class="music-control-container">
-        <button id="btn-global-music" class="btn-global-music" title="Müziği Aç/Kapat">
+<body class="on-splash">
+    <!-- Global Music Player Wrapper -->
+    <div class="music-outer-wrapper">
+        <span class="mozart-text">Mozart'tan</span>
+        <div class="music-control-container">
+            <button id="btn-global-music" class="btn-global-music" title="Müziği Aç/Kapat">
             <svg class="icon-music-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
@@ -50,6 +53,7 @@
         </button>
         <div class="volume-slider-container">
             <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1.0">
+        </div>
         </div>
     </div>
     <audio id="bg-music" loop>

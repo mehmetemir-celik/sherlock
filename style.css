@@ -505,8 +505,7 @@ body {
     margin: 0 auto;
     width: 100%;
     height: 100vh;
-    padding: 0;
-    /* No outer padding to keep scrollbar at edge */
+    padding: 0 0 var(--sp-xl) 0;
 }
 
 #story-select-screen .screen-header,
@@ -619,7 +618,7 @@ body {
     border-color: var(--gold);
     color: var(--text-dark);
     box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.25);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
 }
 
 .story-grid {
@@ -897,7 +896,7 @@ body {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    padding: var(--sp-sm) 0;
+    padding: var(--sp-sm) var(--sp-sm);
     scroll-behavior: smooth;
     overscroll-behavior: contain;
     will-change: scroll-position;
@@ -1189,7 +1188,7 @@ body {
 }
 
 .btn-solve:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     background: var(--crimson-light);
     box-shadow: 0 4px 20px rgba(162, 44, 39, 0.4);
 }
@@ -1247,17 +1246,39 @@ body {
     transition: all 0.3s;
 }
 
-/* Music Control Container */
-.music-control-container {
+.mozart-text {
+    display: none;
+    font-style: italic;
+    color: var(--text-muted-light);
+    font-size: 0.8rem;
+    pointer-events: none;
+    white-space: nowrap;
+    opacity: 0.8;
+}
+
+/* Visibility based on screen state */
+.on-splash .mozart-text {
+    display: inline-block;
+    animation: fadeIn 0.8s ease;
+}
+
+/* Music Control Container Wrapper */
+.music-outer-wrapper {
     position: fixed;
     top: var(--sp-md);
     right: var(--sp-md);
     z-index: 1000;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 15px; /* Spacing between Mozart text and the bar */
+}
+
+/* Music Control Container pill */
+.music-control-container {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Slightly tighter gap inside the pill */
     background: rgba(0, 0, 0, 0.15);
-    /* Slightly more subtle */
     backdrop-filter: blur(4px);
     padding: 6px 12px;
     border-radius: var(--radius-full);

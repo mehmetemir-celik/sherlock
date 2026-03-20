@@ -26,6 +26,11 @@ const state = {
     musicVolume: parseFloat(localStorage.getItem('sherlock-volume') || '1.0')
 };
 
+// Web Audio API context for cross-browser volume control
+let audioCtx = null;
+let gainNode = null;
+let audioSource = null;
+
 // ============================================
 // GAME CONFIG
 // ============================================
@@ -104,7 +109,8 @@ function init() {
 
     // Set background music volume lower
     if (DOM.bgMusic) {
-        DOM.bgMusic.volume = state.musicVolume * 0.1; // Scale volume to be much lower (10% of slider)
+        // Fallback for standard volume (will be overridden by Web Audio if available)
+        DOM.bgMusic.volume = state.musicVolume * 0.1;
         if (DOM.volumeSlider) {
             DOM.volumeSlider.value = state.musicVolume;
             updateVolumeTrack(state.musicVolume);
@@ -131,6 +137,30 @@ function initTurnstile() {
         });
     } else {
         setTimeout(initTurnstile, 1000); // Retry if script not loaded yet
+    }
+}
+
+
+function initAudio() {
+    if (audioCtx || !DOM.bgMusic) return;
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+
+        audioCtx = new AudioContext();
+        gainNode = audioCtx.createGain();
+        audioSource = audioCtx.createMediaElementSource(DOM.bgMusic);
+
+        audioSource.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        // Use the GainNode for volume, keep the element's volume at 1.0 to avoid double-scaling
+        DOM.bgMusic.volume = 1.0;
+        gainNode.gain.setValueAtTime(state.musicVolume * 0.1, audioCtx.currentTime);
+
+        console.log("Web Audio API initialized successfully");
+    } catch (e) {
+        console.warn("Web Audio API initialization failed:", e);
     }
 }
 
@@ -213,12 +243,21 @@ function bindEvents() {
         DOM.volumeSlider.addEventListener('input', (e) => {
             const vol = parseFloat(e.target.value);
             state.musicVolume = vol;
-            if (DOM.bgMusic) DOM.bgMusic.volume = vol * 0.1; // Scale volume to be much lower (10% of slider)
+
+            // Try to initialize audio context on interaction if not yet existing
+            initAudio();
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+
+            // Update volume via GainNode (for mobile/iOS support) or standard property
+            if (gainNode) {
+                gainNode.gain.setTargetAtTime(vol * 0.1, audioCtx.currentTime, 0.02);
+            } else if (DOM.bgMusic) {
+                DOM.bgMusic.volume = vol * 0.1;
+            }
+
             localStorage.setItem('sherlock-volume', vol);
             updateVolumeTrack(vol);
 
-            // If volume is > 0 and was muted, maybe unmute? 
-            // Better to let toggle handle it, but update state if needed
             if (vol > 0 && !state.isMusicPlaying) {
                 state.isMusicPlaying = true;
                 updateMusicUI();
@@ -233,6 +272,11 @@ function bindEvents() {
 
     // Play music on FIRST interaction anywhere on the page (browser requirement)
     const playOnInteraction = () => {
+        initAudio();
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
         if (state.isMusicPlaying && DOM.bgMusic.paused) {
             DOM.bgMusic.play().then(() => {
                 console.log("Music started successfully on interaction");
@@ -256,6 +300,7 @@ function bindEvents() {
         } else {
             // Tab is active again
             if (state.isMusicPlaying && DOM.bgMusic && DOM.bgMusic.paused) {
+                if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
                 DOM.bgMusic.play().catch(e => console.log("Auto-resume failed:", e));
             }
         }
@@ -265,6 +310,11 @@ function bindEvents() {
 function toggleMusic() {
     state.isMusicPlaying = !state.isMusicPlaying;
     updateMusicUI();
+
+    initAudio();
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
 
     if (state.isMusicPlaying) {
         DOM.bgMusic.play().catch(e => console.log("Play failed:", e));
@@ -320,6 +370,7 @@ function switchScreen(screenName) {
     if (targetScreen) {
         targetScreen.classList.add('active');
         state.currentScreen = screenName;
+        document.body.classList.toggle('on-splash', screenName === 'splash');
     }
 }
 
@@ -413,12 +464,12 @@ async function handleSendQuestion() {
     const question = DOM.questionInput.value.trim();
     if (!question || state.isProcessing) return;
 
-    // --- Limits and Security Checks ---
     const now = Date.now();
+
+    // --- Limits and Security Checks ---
     if (now - state.lastQuestionTime < GAME_CONFIG.COOLDOWN_MS) {
-        addChatBubble('user', question);
+        // Show warning but DO NOT clear input
         addAIChatBubble({ type: 'warning', text: 'Çok hızlı soruyorsun! Lütfen birkaç saniye bekle.' });
-        DOM.questionInput.value = '';
         return;
     }
 
@@ -477,6 +528,11 @@ async function handleSendQuestion() {
 
             // Show answer
             addAIChatBubble(answer);
+
+            // If it's a warning or error, restore the question so they can edit it
+            if (answer.type === 'warning' || answer.error) {
+                DOM.questionInput.value = question;
+            }
         }
     } catch (err) {
         removeTypingIndicator();
@@ -485,6 +541,8 @@ async function handleSendQuestion() {
             text: 'Beklenmeyen bir hata oluştu. Lütfen tekrar dene!'
         });
         console.error('Question handling error:', err);
+        // Put the question back on error
+        DOM.questionInput.value = question;
     }
 
     state.isProcessing = false;
@@ -611,6 +669,7 @@ async function handleCheckSolution() {
             localStorage.setItem('sherlock-solved', JSON.stringify([...state.solvedStories]));
 
             addChatBubble('system', ` ${result.text || 'Tebrikler! Doğru çözüme ulaştın!'}`);
+            DOM.solveInput.value = ''; // Success: clear input
             setTimeout(() => showResult(true), 5000);
 
         } else if (result.result === 'close') {
@@ -618,27 +677,29 @@ async function handleCheckSolution() {
                 type: 'guess',
                 text: result.text || 'Yaklaştın ama tam olarak değil. Biraz daha düşün! 🤔'
             });
-
+            // Keep input for refining
         } else if (result.result === 'error') {
             console.error('Solution API failed:', result.text);
             addAIChatBubble({
                 type: 'error',
                 text: 'Çözüm kontrolünde bir hata oluştu. Lütfen tekrar dene!'
             });
+            // Keep input on error
         } else {
             addAIChatBubble({
                 type: 'guess',
                 text: result.text || 'Bu doğru çözüm değil. Soru sormaya devam et! 🔍'
             });
+            // Keep input on wrong answer
         }
     } catch (err) {
         removeTypingIndicator();
         addAIChatBubble({ type: 'error', text: 'Çözüm kontrolünde beklenmeyen bir hata oluştu.' });
         console.error('Solution check error:', err);
+        // Keep input on exception
     }
 
     state.isProcessing = false;
-    DOM.solveInput.value = '';
 }
 
 // ============================================
