@@ -1,6 +1,6 @@
 // Sherlock Yes/No - Game Engine (Gemini LLM Powered)
 import { STORIES } from './stories.js';
-import { askGemini, checkSolutionWithGemini } from './gemini.js';
+import { askGemini, checkSolutionWithGemini, verifySession } from './gemini.js';
 
 // ============================================
 // STATE MANAGEMENT
@@ -129,7 +129,15 @@ function initTurnstile() {
             callback: function (token) {
                 state.turnstileToken = token;
                 state.isVerified = true;
-                handleVerificationSuccess();
+                handleVerificationSuccess(token);
+            },
+            'expired-callback': function () {
+                state.isVerified = false;
+                state.turnstileToken = null;
+                if (state.currentScreen === 'splash') {
+                    if (DOM.splashButtons) DOM.splashButtons.style.display = 'none';
+                    if (DOM.turnstileWrapper) DOM.turnstileWrapper.style.display = 'block';
+                }
             },
             'error-callback': function () {
                 console.error("Turnstile failed to load or verify.");
@@ -164,9 +172,18 @@ function initAudio() {
     }
 }
 
-function handleVerificationSuccess() {
+async function handleVerificationSuccess(token) {
     const wrapper = DOM.turnstileWrapper;
     const splashButtons = DOM.splashButtons;
+
+    // Arka planda sunucuya "bu IP güvenli" damgasını vur (Ping)
+    // Böylece token daha bayatlamadan Redis'e kaydedilir.
+    try {
+        await verifySession(token);
+        console.log("Session verified on server");
+    } catch (err) {
+        console.error("Server-side verification failed:", err);
+    }
 
     if (wrapper) wrapper.style.display = 'none';
     if (splashButtons) {

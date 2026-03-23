@@ -1270,14 +1270,16 @@ body {
     z-index: 1000;
     display: flex;
     align-items: center;
-    gap: 15px; /* Spacing between Mozart text and the bar */
+    gap: 15px;
+    /* Spacing between Mozart text and the bar */
 }
 
 /* Music Control Container pill */
 .music-control-container {
     display: flex;
     align-items: center;
-    gap: 8px; /* Slightly tighter gap inside the pill */
+    gap: 8px;
+    /* Slightly tighter gap inside the pill */
     background: rgba(0, 0, 0, 0.15);
     backdrop-filter: blur(4px);
     padding: 6px 12px;

@@ -103,17 +103,29 @@ export default async (req) => {
             const verifyOutcome = await verifyRes.json();
 
             if (!verifyOutcome.success) {
-                return new Response(JSON.stringify({ error: 'Bot verification failed', text: 'Bot doğrulaması başarısız. Lütfen sayfayı yenileyip tekrar deneyin.' }), {
+                console.error("Turnstile failure:", verifyOutcome);
+                return new Response(JSON.stringify({ 
+                    error: 'Bot verification failed', 
+                    text: 'Bot doğrulaması başarısız (Süre dolmuş olabilir). Lütfen sayfayı yenileyip tekrar deneyin.',
+                    code: verifyOutcome['error-codes']?.[0]
+                }), {
                     status: 403, headers: { 'Content-Type': 'application/json' }
                 });
             }
 
-            // Cache verification for 1 hour (non-blocking)
+            // Cache verification for 3 hours (non-blocking)
             if (REDIS_URL && REDIS_TOKEN) {
-                fetch(`${REDIS_URL}/SET/${verificationKey}/true/EX/3600`, {
+                fetch(`${REDIS_URL}/SET/${verificationKey}/true/EX/10800`, {
                     headers: { Authorization: `Bearer ${REDIS_TOKEN}` }
                 }).catch(console.error);
             }
+        }
+
+        // 5.5. Session doğrulama (Ping) için erken dönüş
+        if (metadata?.type === 'init') {
+            return new Response(JSON.stringify({ success: true, text: 'Session verified' }), {
+                status: 200, headers: { 'Content-Type': 'application/json' }
+            });
         }
     } catch (err) {
         console.error("Verification/RateLimit error:", err);
